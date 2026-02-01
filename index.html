@@ -260,14 +260,12 @@
             flex-direction: column;
         }
 
-        /* Identidad se queda al 100% del ancho del contenedor */
         .bloque-identidad {
-    /* Quitamos el flex para que no se deje encoger */
-    flex: none; 
-    width: 802px; /* <--- Ajusta este ancho a como te gusta que se vea tu identidad */
-    border-left-color: var(--blue); 
-} 
-        }
+    flex: 1; /* Cambiamos none por 1 */
+    min-width: 300px; /* Ancho mínimo para que no se rompa */
+    max-width: 802px; /* Tu ancho preferido */
+    border-left-color: var(--blue);
+}     }
 
         /* Entrenamiento y Pago crecen igual */
         .bloque-mision { flex: 1; border-left-color: var(--yellow); }
@@ -353,38 +351,41 @@
         .modal-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index: 100000; align-items:center; justify-content:center; }
         .modal-box { background: white; padding: 25px; border-radius: 30px; width: 90%; max-width: 380px; text-align: center; }
 
+/* --- ESTE ES EL PASO 2: COPIA DESDE AQUÍ --- */
         @media (max-width: 1024px) {
-            #registro[style*="display: flex"], 
-            #registro[style*="display:flex"] { 
-                flex-direction: column !important; 
-                align-items: center !important; 
-                overflow-y: visible !important;
+            #registro {
+                padding: 20px 10px !important;
+                display: flex !important;
+                flex-direction: column !important; /* Apila hacia abajo */
+                align-items: center !important;    /* Centra las tarjetas */
                 height: auto !important;
+                overflow-y: visible !important;
                 padding-bottom: 100px !important;
             }
 
-            .form-container-wrapper {
-                width: auto !important;
-                max-width: 95% !important;
-                display: inline-block !important;
-                margin: 10px auto !important;
+            /* Forzamos que las filas se vuelvan columnas y se centren */
+            .fila-layout-superior, .contenedor-inferior-apps {
+                flex-direction: column !important;
+                align-items: center !important;
+                width: 100% !important;
+                gap: 20px !important;
             }
 
-            .form-card, .cost-card { 
-                width: 100% !important; 
-                max-width: 380px !important; 
-                box-sizing: border-box !important;
+            /* Tus tarjetas: les quitamos el ancho fijo y las centramos */
+            .bloque-identidad, .bloque-beneficios-new, .bloque-mision, .bloque-pago {
+                width: 95% !important; 
+                max-width: 450px !important; 
+                flex: none !important;
+                margin: 0 auto !important;
             }
 
+            /* --- AQUÍ ESTÁN TUS PARCHES (NO LOS TOQUÉ) --- */
             .header { font-size: 16px !important; padding: 10px !important; }
-            .header span { text-align: center; }
             .grid-asis { grid-template-columns: 1fr !important; }
-            
-            /* Scroll activado para móvil */
             html, body { overflow-y: auto !important; }
             #main-app-container { height: auto !important; min-height: 100dvh; }
 
-            /* PARCHE DE TRANSPARENCIA */
+            /* TU PARCHE DE TRANSPARENCIA */
             #sel-horario {
                 background: transparent !important;
                 border: 2px solid rgba(38, 103, 255, 0.2) !important;
@@ -393,10 +394,12 @@
                 outline: none !important;
                 -webkit-appearance: none;
             }
-
             #sel-horario option { background: white !important; color: var(--dark) !important; }
-            #sel-horario:focus { background: transparent !important; }
+
+            /* Ajuste para que el formulario no se vea apretado */
+            #formReg { grid-template-columns: 1fr !important; }
         }
+        /* --- HASTA AQUÍ TERMINA EL REEMPLAZO --- */
     </style>
 </head>
 <body>
