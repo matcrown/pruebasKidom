@@ -288,7 +288,7 @@
     /* Flex 1 hará que tome TODO el espacio que sobre a la derecha */
     flex: 1; 
     /* Quitamos el max-width para que llegue hasta el borde derecho */
-    max-width: none; 
+    max-width: 600px; 
     background: white;
     padding: 20px;
     border-radius: 25px;
@@ -373,7 +373,7 @@
 
             /* Tus tarjetas: les quitamos el ancho fijo y las centramos */
             .bloque-identidad, .bloque-beneficios-new, .bloque-mision, .bloque-pago {
-                width: 95% !important; 
+                width: 90% !important; 
                 max-width: 450px !important; 
                 flex: none !important;
                 margin: 0 auto !important;
@@ -885,16 +885,17 @@
     
     function showTab(t) { 
         // 1. Ocultar todas las secciones
-        ['registro', 'asistencia', 'calendario', 'dashboard'].forEach(id => {
-            const el = document.getElementById(id);
-            if(el) el.style.display = 'none';
-        }); 
+      ['registro', 'asistencia', 'calendario', 'dashboard'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.style.setProperty('display', 'none', 'important');
+    });
 
         // 2. Mostrar la sección activa con el display correcto
         const target = document.getElementById(t);
-        if (target) {
-            target.style.display = (t === 'registro') ? 'flex' : 'block'; 
-        }
+    if (target) {
+        const displayType = (t === 'registro') ? 'flex' : 'block';
+        target.style.setProperty('display', displayType, 'important');
+    }
 
         // 3. Gestionar botones activos
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); 
