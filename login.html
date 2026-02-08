@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso Socios | S.M.S .</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://pay.payphonetodoesposible.com/api/button/v2/index.js"></script>
+
+    <style>
+        /* --- TUS VARIABLES --- */
+        :root {
+            --bg-dark: #050505; --bg-darker: #000000; --texto-blanco: #ffffff; --texto-gris: #cccccc;
+            --gold-gradient: linear-gradient(to right, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C);
+            --gold-main: #B38728; --glass-bg: rgba(10, 10, 10, 0.95); /* Más opaco para evitar mezcla visual */
+            --glass-border: rgba(191, 149, 63, 0.5);
+            --payphone-color: #E65A2C;
+        }
+        body, html { margin: 0; padding: 0; font-family: 'Montserrat', sans-serif; background-color: var(--bg-dark); color: var(--texto-blanco); overflow-x: hidden; height: 100%; }
+
+        /* NAV */
+        .nav-bar { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 15px 2% 15px 2%; position: fixed; top: 0; left: 0; width: 100%; 
+            box-sizing: border-box; z-index: 1000; 
+            background: #050505; 
+            border-bottom: 1px solid var(--glass-border); 
+            border-radius: 0 0 20px 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.9); 
+        }
+        .logo-placeholder { font-weight: 900; font-size: 1.5rem; letter-spacing: 1px; display: flex; align-items: center; }
+        .nav-logo-img { height: 50px; width: auto; margin-right: 12px; border-radius: 8px; }
+        .logo-highlight { background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 0 15px rgba(191, 149, 63, 0.5); }
+        .nav-links { display: flex; align-items: center; }
+        .nav-link-container { position: relative; padding: 0 20px; display: flex; align-items: center; }
+        .nav-link-container:not(:last-child)::after { content: ''; position: absolute; right: 0; height: 20px; width: 1px; background: var(--gold-gradient); opacity: 0.6; }
+        .nav-link { text-decoration: none; color: var(--texto-blanco); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; transition: all 0.3s; letter-spacing: 1px; }
+        .nav-link:hover, .nav-link.active { background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 0 10px rgba(191, 149, 63, 0.4); }
+        .nav-socials { display: flex; gap: 15px; align-items: center; }
+        .nav-social-icon { color: var(--texto-blanco); font-size: 1.1rem; transition: 0.3s; }
+        .nav-socials-divider { width: 1px; height: 30px; background: var(--gold-main); margin: 0 10px; opacity: 0; }
+
+        /* --- LAYOUT SPLIT SCREEN --- */
+        .split-container {
+            display: flex; height: 100vh; width: 100%; overflow: hidden;
+            padding-top: 90px; box-sizing: border-box; background: #000000;
+        }
+
+        /* --- IZQUIERDA: MURO VISUAL ANIMADO --- */
+        .visual-side {
+            width: 45%; position: relative; overflow: hidden;
+            border-right: 1px solid rgba(191, 149, 63, 0.2); display: flex;
+            justify-content: center; background: #000;
+        }
+        .visual-overlay {
+            position: absolute; inset: 0; 
+            background: linear-gradient(to bottom, #000 0%, transparent 15%, transparent 85%, #000 100%);
+            z-index: 2; pointer-events: none;
+        }
+        .scrolling-wrapper {
+            width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 0 15px;
+            animation: scrollDown 25s linear infinite; 
+        }
+        @keyframes scrollDown { 0% { transform: translateY(-50%); } 100% { transform: translateY(0); } }
+
+        .scroll-img {
+            width: 100%; border-radius: 12px; object-fit: cover; height: 220px; opacity: 0.6; transition: 0.4s;
+            filter: grayscale(60%); border: 1px solid rgba(255,255,255,0.05);
+        }
+        .scroll-img:hover { opacity: 1; filter: grayscale(0%); transform: scale(1.03); border-color: var(--gold-main); box-shadow: 0 0 20px rgba(191, 149, 63, 0.3); }
+
+        /* --- DERECHA: FORMULARIO --- */
+        .form-side {
+            width: 55%; display: flex; flex-direction: column; align-items: center;
+            justify-content: flex-start; position: relative; overflow-y: auto; 
+            padding-top: 40px; padding-bottom: 40px;
+        }
+        .auth-card {
+            background: #050505; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(191, 149, 63, 0.3); border-radius: 20px; padding: 40px;
+            width: 90%; max-width: 500px; box-shadow: 0 20px 60px rgba(0,0,0,0.9); margin-bottom: 40px;
+        }
+        .auth-header { text-align: center; margin-bottom: 25px; }
+        .auth-title { font-size: 1.8rem; font-weight: 800; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        .gold-text { background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .auth-tabs { display: flex; background: rgba(0,0,0,0.4); border-radius: 50px; padding: 4px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.05); }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: transparent; color: #888; font-weight: 700; cursor: pointer; border-radius: 50px; transition: 0.3s; font-size: 0.85rem; text-transform: uppercase; font-family: 'Montserrat', sans-serif; }
+        .tab-btn.active { background: var(--gold-gradient); color: #000; box-shadow: 0 5px 15px rgba(191, 149, 63, 0.4); }
+
+        .form-content { display: none; animation: fadeIn 0.4s ease; }
+        .form-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .input-group { margin-bottom: 18px; position: relative; }
+        .input-label { display: block; font-size: 0.75rem; color: var(--gold-main); font-weight: 700; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .input-field, .input-select { width: 100%; padding: 14px 14px 14px 45px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; color: white; font-family: 'Montserrat', sans-serif; font-size: 0.95rem; box-sizing: border-box; transition: 0.3s; }
+        .input-field:focus, .input-select:focus { border-color: var(--gold-main); outline: none; background: rgba(255,255,255,0.08); box-shadow: 0 0 15px rgba(191, 149, 63, 0.1); }
+        .input-icon { position: absolute; left: 16px; top: 42px; color: #666; font-size: 1rem; transition: 0.3s; }
+        .input-field:focus + .input-icon, .input-select:focus + .input-icon { color: var(--gold-main); }
+        .input-select { cursor: pointer; appearance: none; } .input-select option { background: #000; color: white; }
+
+        .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+        .btn-auth { width: 100%; padding: 16px; background: var(--gold-gradient); border: none; border-radius: 50px; color: #000; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: 0.3s; font-size: 0.95rem; margin-top: 20px; }
+        .btn-auth:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(191, 149, 63, 0.5); }
+
+        .payment-method-container { margin-top: 25px; margin-bottom: 20px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; }
+        .payment-options { display: flex; gap: 15px; margin-top: 15px; }
+        .payment-radio { display: none; }
+        .payment-card-select { flex: 1; border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 15px; text-align: center; cursor: pointer; transition: 0.3s; background: rgba(255,255,255,0.02); font-size: 0.9rem; font-weight: 600; color: #aaa; }
+        .payment-radio:checked + .payment-card-select { border-color: var(--gold-main); background: rgba(191, 149, 63, 0.15); color: white; box-shadow: 0 0 15px rgba(191, 149, 63, 0.2); }
+        .payment-card-select i { font-size: 1.4rem; display: block; margin-bottom: 8px; color: #fff; transition: 0.3s; }
+        .payment-radio:checked + .payment-card-select i { color: var(--gold-main); transform: scale(1.1); }
+
+        .payment-summary-box { background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(191, 149, 63, 0.3); border-radius: 12px; padding: 20px; margin-top: 25px; }
+        .summary-row { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 8px; color: #ccc; }
+        .summary-total { display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: 900; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px; margin-top: 8px; color: white; text-transform: uppercase; }
+        .total-value { color: var(--gold-main); font-size: 1.2rem; }
+
+        .transfer-info { display: none; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 12px; margin-top: 20px; border: 1px dashed rgba(191, 149, 63, 0.4); }
+        .bank-details-box { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin-top: 10px; }
+        .bank-details-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px; }
+        .bank-details-row:last-child { border-bottom: none; }
+        
+        .file-upload-wrapper { position: relative; margin-top: 20px; }
+        .file-upload-label { display: block; width: 100%; padding: 12px; background: rgba(255,255,255,0.08); color: white; text-align: center; border-radius: 10px; cursor: pointer; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.2); transition: 0.3s; font-weight: 600; box-sizing: border-box; }
+        .file-upload-label:hover { border-color: var(--gold-main); background: rgba(191, 149, 63, 0.1); color: var(--gold-main); }
+        .file-upload-input { display: none; }
+        .file-name-display { font-size: 0.8rem; color: var(--gold-main); margin-top: 8px; text-align: center; font-style: italic; }
+
+        .payphone-info { display: none; margin-top: 20px; text-align: center; }
+        .btn-payphone { width: 100%; padding: 18px; background: var(--payphone-color); color: white; border-radius: 50px; text-decoration: none; display: inline-block; font-weight: 800; text-transform: uppercase; box-shadow: 0 5px 20px rgba(230, 90, 44, 0.3); transition: 0.3s; font-size: 1rem; box-sizing: border-box; }
+        .btn-payphone:hover { transform: translateY(-3px); background: #d64d20; box-shadow: 0 10px 30px rgba(230, 90, 44, 0.5); }
+
+        .auth-footer-links { margin-top: 0px; text-align: center; font-size: 0.8rem; color: #666; width: 100%; padding-bottom: 20px; }
+        .auth-footer-links a { color: #888; text-decoration: none; margin: 0 10px; transition: 0.3s; }
+        .auth-footer-links a:hover { color: var(--gold-main); }
+
+        @media (max-width: 900px) {
+            .visual-side { display: none; }
+            .form-side { width: 100%; padding-top: 20px; }
+            .nav-links { display: none; }
+            .form-grid-2 { grid-template-columns: 1fr; }
+            .auth-card { width: 95%; padding: 25px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="nav-bar">
+        <div class="logo-placeholder">
+            <img src="https://i.imgur.com/3bI2FKx.jpeg" alt="Logo SMS" class="nav-logo-img">
+            SOCIAL MEDIA&nbsp;<span class="logo-highlight">STUDIO</span>
+        </div>
+        <div class="nav-links">
+            <div class="nav-link-container"><a href="index.html" class="nav-link">Inicio</a></div>
+            <div class="nav-link-container"><a href="servicios.html" class="nav-link">Servicios</a></div>
+            <div class="nav-link-container"><a href="asociados.html" class="nav-link">Asociados</a></div>
+            <div class="nav-link-container"><a href="soporte.html" class="nav-link">Soporte</a></div>
+            <div class="nav-link-container"><a href="login.html" class="nav-link active">Iniciar Sesion</a></div>
+            <div class="nav-socials-divider"></div>
+            <div class="nav-socials">
+                <a href="https://www.instagram.com/sms.mediastudio/" target="_blank" class="nav-social-icon"><i class="fab fa-instagram"></i></a>
+                <a href="#" target="_blank" class="nav-social-icon"><i class="fab fa-tiktok"></i></a>
+                <a href="https://wa.me/593979283332" target="_blank" class="nav-social-icon"><i class="fab fa-whatsapp"></i></a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="split-container">
+        
+        <div class="visual-side">
+            <div class="visual-overlay"></div>
+            <div class="scrolling-wrapper">
+                <img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+                <img src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+                <img src="https://images.unsplash.com/photo-1526304640152-d4619684e484?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+                <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+                
+                <img src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+                <img src="https://images.unsplash.com/photo-1559526324-4b87b5e36e44?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+                <img src="https://images.unsplash.com/photo-1579621970563-ebec7560eb3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+                <img src="https://images.unsplash.com/photo-1553729459-efe14ef6055d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+
+                <img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+                <img src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+                <img src="https://images.unsplash.com/photo-1526304640152-d4619684e484?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+                <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+                <img src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+                <img src="https://images.unsplash.com/photo-1559526324-4b87b5e36e44?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+                <img src="https://images.unsplash.com/photo-1579621970563-ebec7560eb3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+                <img src="https://images.unsplash.com/photo-1553729459-efe14ef6055d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+            </div>
+        </div>
+
+        <div class="form-side">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <div class="auth-title">Portal de <span class="gold-text">Socios</span></div>
+                    <p style="color:#888; font-size:0.9rem;">Gestión de cuenta y facturación.</p>
+                </div>
+
+                <div class="auth-tabs">
+                    <button class="tab-btn active" onclick="switchTab('login')">Ingresar</button>
+                    <button class="tab-btn" onclick="switchTab('register')">Registrarse</button>
+                </div>
+
+                <div id="loginForm" class="form-content active">
+                    <form>
+                        <div class="input-group">
+                            <label class="input-label">Correo Electrónico</label>
+                            <input type="email" class="input-field" placeholder="tu@correo.com" required>
+                            <i class="fas fa-envelope input-icon"></i>
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label">Contraseña</label>
+                            <input type="password" class="input-field" placeholder="••••••••" required>
+                            <i class="fas fa-lock input-icon"></i>
+                        </div>
+                        <button type="submit" class="btn-auth">Entrar al Dashboard</button>
+                    </form>
+                </div>
+
+                <div id="registerForm" class="form-content">
+                    <form>
+                        <div class="input-group">
+                            <label class="input-label">Nombres Completos</label>
+                            <input type="text" class="input-field" placeholder="Juan Pérez" required>
+                            <i class="fas fa-user input-icon"></i>
+                        </div>
+
+                        <div class="form-grid-2">
+                            <div class="input-group">
+                                <label class="input-label">Cédula o RUC</label>
+                                <input type="text" class="input-field" placeholder="171..." required>
+                                <i class="fas fa-id-card input-icon"></i>
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">Teléfono</label>
+                                <input type="tel" class="input-field" placeholder="099..." required>
+                                <i class="fas fa-phone input-icon"></i>
+                            </div>
+                        </div>
+
+                        <div class="form-grid-2">
+                             <div class="input-group">
+                                <label class="input-label">Fecha Nacimiento</label>
+                                <input type="date" class="input-field" required>
+                                <i class="fas fa-calendar input-icon"></i>
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">Dirección</label>
+                                <input type="text" class="input-field" placeholder="Av. Principal..." required>
+                                <i class="fas fa-map-marker-alt input-icon"></i>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">Correo Electrónico</label>
+                            <input type="email" class="input-field" placeholder="Para factura y acceso" required>
+                            <i class="fas fa-envelope input-icon"></i>
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">Contraseña</label>
+                            <input type="password" class="input-field" placeholder="Crea tu clave" required>
+                            <i class="fas fa-lock input-icon"></i>
+                        </div>
+
+                        <div class="payment-method-container">
+                            <label class="input-label" style="text-align:center; margin-bottom:15px; font-size:0.9rem;">MÉTODO DE PAGO</label>
+                            
+                            <div class="payment-options">
+                                <input type="radio" name="pago" id="pago_transf" class="payment-radio" checked onchange="togglePayment()">
+                                <label for="pago_transf" class="payment-card-select">
+                                    <i class="fas fa-university"></i> Transferencia
+                                </label>
+
+                                <input type="radio" name="pago" id="pago_card" class="payment-radio" onchange="togglePayment()">
+                                <label for="pago_card" class="payment-card-select">
+                                    <i class="fas fa-credit-card"></i> Tarjeta
+                                </label>
+                            </div>
+
+                            <div class="payment-summary-box">
+                                <div class="summary-row"><span>Subtotal:</span> <span>$40.00</span></div>
+                                <div class="summary-row"><span>IVA (0%):</span> <span>$0.00</span></div>
+                                <div class="summary-row" id="payphoneFeeRow" style="display:none; color:var(--payphone-color);">
+                                    <span>Comisión PayPhone (6%):</span> <span>$2.40</span>
+                                </div>
+                                <div class="summary-total">
+                                    <span>TOTAL A PAGAR:</span> <span class="total-value" id="totalAmountDisplay">$40.00</span>
+                                </div>
+                            </div>
+
+                            <div id="view_transf" class="transfer-info" style="display:block;">
+                                <div class="input-group" style="margin-bottom:15px;">
+                                    <label class="input-label">Selecciona el Banco</label>
+                                    <select id="bankSelector" class="input-select" onchange="updateBankInfo()">
+                                        <option value="pichincha">Banco Pichincha</option>
+                                        <option value="guayaquil">Banco Guayaquil</option>
+                                        <option value="produbanco">Produbanco</option>
+                                        <option value="pacifico">Banco del Pacífico</option>
+                                        <option value="bolivariano">Banco Bolivariano</option>
+                                    </select>
+                                    <i class="fas fa-chevron-down input-icon"></i>
+                                </div>
+                                <div id="bankDetails" class="bank-details-box"></div>
+                                <div class="file-upload-wrapper">
+                                    <label for="comprobante_upload" class="file-upload-label">
+                                        <i class="fas fa-upload"></i> SUBIR FOTO DEL COMPROBANTE
+                                    </label>
+                                    <input type="file" id="comprobante_upload" class="file-upload-input" accept="image/*" onchange="showFileName()">
+                                    <div id="fileNameDisplay" class="file-name-display"></div>
+                                </div>
+                                <button type="submit" class="btn-auth">Enviar Solicitud</button>
+                            </div>
+
+                            <div id="view_card" class="payphone-info">
+                                <p style="color:#aaa; font-size:0.8rem; margin-bottom:20px; line-height:1.5;">
+                                    Pago procesado de forma segura por PayPhone.<br>
+                                    <span style="color:#E65A2C;">Activación inmediata.</span>
+                                </p>
+                                <div id="pp-button" style="display: flex; justify-content: center;"></div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="auth-footer-links">
+                <a href="terminos.html">Términos</a>
+                <a href="privacidad.html">Privacidad</a>
+                <a href="soporte.html">Ayuda</a>
+                <p style="margin-top:15px; opacity:0.4;">&copy; 2026 S.M.S. Studio.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === 1. TUS CREDENCIALES ===
+        const firebaseConfig = {
+            apiKey: "AIzaSyBli5zdrVkQxXPTNV3FemRsNAVNmhWqoGM",
+            authDomain: "sms-platform-b7cfe.firebaseapp.com",
+            projectId: "sms-platform-b7cfe",
+            storageBucket: "sms-platform-b7cfe.firebasestorage.app",
+            messagingSenderId: "1043775421559",
+            appId: "1:1043775421559:web:063e28de971a95cbe79a72"
+        };
+        
+        const PAYPHONE_TOKEN = "YnJ8exyDeCaMBHad5foM_Aao86uQmISdKWjWabF3wsISHNGnWgsJBfsHyTqZ8YqKZjxcr6fyoCtbZ3WBKmx-9xW39HiO2yMP-IuamwuVMzpF5R8oQ6H_vgW4VDcKDTnuzAZ14NkqezUIhLHDgJmrSt_mP-4xp-RfMzce8U1063hseHQP6zGvOUmOk3veUPf3UuHjLmnbie3xqbD4jevNUGBG6IWCdPUhZJppj0yccZztkw-30umJHxCIU1y_R31R6VBV-rDMw14F-qS6RTTlWBPNQ-CUVcbZDrv5-vT4_ha67DWXI4buKjsZfvTlUdxczUefk6pVLYpCmhizPeHoAdfb_NA"; // <--- 
+        const IMGBB_KEY = "49db4d7d4a273c5aba76c5e74ce0f317"; // <--- 
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // DATOS DE BANCOS
+        const bankData = {
+            pichincha: { name: "S.M.S. Studio", account: "220XXXXXXX", type: "Corriente", ruc: "179XXXXXXX001" },
+            guayaquil: { name: "S.M.S. Studio", account: "14XXXXXXX", type: "Ahorros", ruc: "179XXXXXXX001" },
+            produbanco: { name: "S.M.S. Studio", account: "50XXXXXXX", type: "Corriente", ruc: "179XXXXXXX001" },
+            pacifico: { name: "S.M.S. Studio", account: "77XXXXXXX", type: "Ahorros", ruc: "179XXXXXXX001" },
+            bolivariano: { name: "S.M.S. Studio", account: "09XXXXXXX", type: "Corriente", ruc: "179XXXXXXX001" }
+        };
+
+        function updateBankInfo() {
+            const selector = document.getElementById('bankSelector');
+            const data = bankData[selector.value];
+            document.getElementById('bankDetails').innerHTML = `
+                <div class="bank-details-row"><span class="bank-label">Titular:</span> <span class="bank-value">${data.name}</span></div>
+                <div class="bank-details-row"><span class="bank-label">Cuenta:</span> <span class="bank-value">${data.account}</span></div>
+                <div class="bank-details-row"><span class="bank-label">Tipo:</span> <span class="bank-value">${data.type}</span></div>
+                <div class="bank-details-row"><span class="bank-label">RUC/CI:</span> <span class="bank-value">${data.ruc}</span></div>
+            `;
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.form-content').forEach(form => form.classList.remove('active'));
+            if(tab === 'login') {
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+                document.getElementById('loginForm').classList.add('active');
+            } else {
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+                document.getElementById('registerForm').classList.add('active');
+                updateBankInfo();
+            }
+        }
+
+        function togglePayment() {
+    const isTransf = document.getElementById('pago_transf').checked;
+    document.getElementById('view_transf').style.display = isTransf ? 'block' : 'none';
+    document.getElementById('view_card').style.display = isTransf ? 'none' : 'block';
+    document.getElementById('payphoneFeeRow').style.display = isTransf ? 'none' : 'flex';
+    document.getElementById('totalAmountDisplay').textContent = isTransf ? '$40.00' : '$42.40';
+
+    // DIBUJAR BOTÓN PAYPHONE CON PROTECCIÓN
+    if(!isTransf) {
+        // Verificamos si la librería ya cargó
+        if (typeof payphone !== 'undefined') {
+            document.getElementById('pp-button').innerHTML = "";
+            payphone.checkout({
+                token: PAYPHONE_TOKEN,
+                data: {
+                    amount: 4240,
+                    amountWithoutTax: 4240,
+                    currency: "USD",
+                    clientTransactionId: "TMP-" + Date.now()
+                },
+                onAuthorize: (response) => { console.log("Botón cargado correctamente"); }
+            }).render("#pp-button");
+        } else {
+            document.getElementById('pp-button').innerHTML = "<p style='color:orange;'>Cargando pasarela de pago...</p>";
+            // Intentar de nuevo en 1 segundo si no ha cargado
+            setTimeout(togglePayment, 1000);
+        }
+    }
+}
+
+        function showFileName() {
+            const input = document.getElementById('comprobante_upload');
+            const display = document.getElementById('fileNameDisplay');
+            if (input.files.length > 0) display.textContent = "Archivo listo: " + input.files[0].name;
+            else display.textContent = "";
+        }
+
+        // MOTOR DE REGISTRO
+        const regForm = document.querySelector('#registerForm form');
+        if(regForm) {
+            regForm.addEventListener('submit', async (e) => {
+                const isTransf = document.getElementById('pago_transf').checked;
+                // Si es tarjeta, el botón de PayPhone maneja el pago. Aquí solo bloqueamos el envío normal del form.
+                if(!isTransf) { e.preventDefault(); return; } 
+
+                e.preventDefault();
+                const btn = regForm.querySelector('button[type="submit"]');
+                const originalText = btn.innerText;
+
+                const nombre = regForm.querySelector('input[placeholder="Juan Pérez"]').value;
+                const email = regForm.querySelector('input[placeholder="Para factura y acceso"]').value;
+                const pass = regForm.querySelector('input[placeholder="Crea tu clave"]').value;
+                const telefono = regForm.querySelector('input[placeholder="099..."]').value;
+                const cedula = regForm.querySelector('input[placeholder="171..."]').value;
+
+                btn.innerText = "⏳ PROCESANDO...";
+                btn.disabled = true;
+
+                try {
+                    const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
+                    const uid = userCredential.user.uid;
+                    let fotoUrl = "N/A";
+
+                    const file = document.getElementById('comprobante_upload').files[0];
+                    if(file) {
+                        const formData = new FormData();
+                        formData.append("image", file);
+                        const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method: "POST", body: formData });
+                        const resData = await res.json();
+                        fotoUrl = resData.data.url;
+                    }
+
+                    const counterRef = db.collection('metadata').doc('counters');
+                    let miCodigo = "";
+                    await db.runTransaction(async (transaction) => {
+                        const doc = await transaction.get(counterRef);
+                        let count = doc.exists ? (doc.data().referralCount || 0) + 1 : 1;
+                        miCodigo = "SMS-" + count.toString().padStart(3, '0');
+                        transaction.set(counterRef, { referralCount: count });
+                        transaction.set(db.collection('socios').doc(uid), {
+                            uid, nombre, email, telefono, cedula, codigoReferido: miCodigo,
+                            comprobanteUrl: fotoUrl, metodoPago: "Transferencia",
+                            estado: "Pendiente", fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    });
+
+                    alert("¡Registro enviado! Revisaremos tu pago pronto.");
+                    window.location.reload();
+
+                } catch (err) { alert(err.message); btn.innerText = originalText; btn.disabled = false; }
+            });
+        }
+
+        // MOTOR DE LOGIN
+        const loginForm = document.querySelector('#loginForm form');
+        if(loginForm) {
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = loginForm.querySelector('input[type="email"]').value;
+                const pass = loginForm.querySelector('input[placeholder="••••••••"]').value;
+                try {
+                    const user = await auth.signInWithEmailAndPassword(email, pass);
+                    const doc = await db.collection('socios').doc(user.user.uid).get();
+                    if(doc.exists && doc.data().estado === "Activo") {
+                        sessionStorage.setItem('sms_nombre', doc.data().nombre);
+                        sessionStorage.setItem('sms_codigo', doc.data().codigoReferido);
+                        window.location.href = "dashboard.html";
+                    } else { alert("Cuenta pendiente de activación."); auth.signOut(); }
+                } catch (err) { alert("Acceso denegado."); }
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", () => { updateBankInfo(); togglePayment(); });
+    </script>
+</body>
+</html>
