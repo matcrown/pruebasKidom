@@ -3,217 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>S.M.S . | Social Media Studio</title>
+    <title>Acceso Socios | S.M.S .</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://pay.payphonetodoesposible.com/api/button/v2/index.js"></script>
+
     <style>
-        /* --- VARIABLES --- */
+        /* --- TUS VARIABLES --- */
         :root {
             --bg-dark: #050505; --bg-darker: #000000; --texto-blanco: #ffffff; --texto-gris: #cccccc;
             --gold-gradient: linear-gradient(to right, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C);
-            --gold-main: #B38728; --glass-bg: rgba(10, 10, 10, 0.9); --glass-border: rgba(191, 149, 63, 0.5);
+            --gold-main: #B38728; --glass-bg: rgba(10, 10, 10, 0.95); /* Más opaco para evitar mezcla visual */
+            --glass-border: rgba(191, 149, 63, 0.5);
+            --payphone-color: #E65A2C;
         }
-        body, html { margin: 0; padding: 0; font-family: 'Montserrat', sans-serif; background-color: var(--bg-dark); color: var(--texto-blanco); overflow-x: hidden; }
+        body, html { margin: 0; padding: 0; font-family: 'Montserrat', sans-serif; background-color: var(--bg-dark); color: var(--texto-blanco); overflow-x: hidden; height: 100%; }
 
-        /* --- FONDO DETALLADO --- */
-        .background-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
-        .bg-base { position: absolute; inset: 0; background: radial-gradient(circle at 80% 20%, #1a1a1a, #000000); }
-        .bg-grid { position: absolute; inset: 0; background-size: 60px 60px; background-image: linear-gradient(to right, rgba(191, 149, 63, 0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(191, 149, 63, 0.08) 1px, transparent 1px); opacity: 0.7; }
-        .bg-glow-1 { position: absolute; top: -10%; right: -5%; width: 800px; height: 800px; background: radial-gradient(circle, rgba(191, 149, 63, 0.15) 0%, transparent 60%); filter: blur(80px); }
-        .bg-glow-2 { position: absolute; bottom: 0%; left: 10%; width: 600px; height: 600px; background: radial-gradient(circle, rgba(179, 135, 40, 0.1) 0%, transparent 60%); filter: blur(100px); }
-        .geo-shape { position: absolute; border: 1px solid var(--gold-main); opacity: 0.3; z-index: -1; }
-        .shape-square { top: 15%; left: 50%; width: 150px; height: 150px; transform: rotate(45deg); border-color: rgba(191, 149, 63, 0.2); }
-        .shape-circle { bottom: 20%; right: 10%; width: 300px; height: 300px; border-radius: 50%; border-style: dashed; animation: spin 60s linear infinite; }
-        .shape-line { top: 40%; left: -10%; width: 120%; height: 1px; background: linear-gradient(90deg, transparent, var(--gold-main), transparent); opacity: 0.5; transform: rotate(-15deg); }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-
-        /* --- NAVEGACIÓN --- */
+        /* NAV */
         .nav-bar { 
             display: flex; justify-content: space-between; align-items: center; 
-            /* AJUSTE 1: MÁS ESPACIO A LA DERECHA (10%) */
-            padding: 15px 2% 15px 2%; 
-            position: fixed; top: 0; width: 85%; /* Ajustado ancho para compensar padding extra */
-            left: 0; /* Ocupa todo el ancho base */
-            width: 100%; /* Reset width */
-            box-sizing: border-box; /* Para que el padding no rompa el ancho */
-            z-index: 100; background: rgba(5, 5, 5, 0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--glass-border); border-radius: 0 0 20px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); 
+            padding: 15px 2% 15px 2%; position: fixed; top: 0; left: 0; width: 100%; 
+            box-sizing: border-box; z-index: 1000; 
+            background: #050505; 
+            border-bottom: 1px solid var(--glass-border); 
+            border-radius: 0 0 20px 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.9); 
         }
-        .logo-placeholder { font-weight: 900; font-size: 1.5rem; letter-spacing: 1px; }
-    /* NUEVO: Estilo para la imagen del logo */
-.nav-logo-img {
-    height: 50px; /* Tamaño ajustado para el menú */
-    width: auto;
-    margin-right: 12px; /* Espacio entre imagen y texto */
-    border-radius: 8px; /* Suaviza las esquinas de la imagen */
-}
-/* ACTUALIZACIÓN: Para alinear imagen y texto */
-.logo-placeholder { 
-    display: flex; 
-    align-items: center; 
-}
+        .logo-placeholder { font-weight: 900; font-size: 1.5rem; letter-spacing: 1px; display: flex; align-items: center; }
+        .nav-logo-img { height: 50px; width: auto; margin-right: 12px; border-radius: 8px; }
         .logo-highlight { background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 0 15px rgba(191, 149, 63, 0.5); }
-        
         .nav-links { display: flex; align-items: center; }
         .nav-link-container { position: relative; padding: 0 20px; display: flex; align-items: center; }
         .nav-link-container:not(:last-child)::after { content: ''; position: absolute; right: 0; height: 20px; width: 1px; background: var(--gold-gradient); opacity: 0.6; }
         .nav-link { text-decoration: none; color: var(--texto-blanco); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; transition: all 0.3s; letter-spacing: 1px; }
         .nav-link:hover, .nav-link.active { background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 0 10px rgba(191, 149, 63, 0.4); }
-
-        /* SOCIALS EN MENÚ */
-        .nav-socials-divider { width: 1px; height: 30px; background: var(--gold-main); margin: 0 10px; opacity: 0; }
         .nav-socials { display: flex; gap: 15px; align-items: center; }
         .nav-social-icon { color: var(--texto-blanco); font-size: 1.1rem; transition: 0.3s; }
-        .nav-social-icon:hover { color: var(--gold-main); transform: translateY(-2px); text-shadow: 0 0 10px rgba(191, 149, 63, 0.8); }
+        .nav-socials-divider { width: 1px; height: 30px; background: var(--gold-main); margin: 0 10px; opacity: 0; }
 
-        /* --- HERO SECTION --- */
-        .hero-section {
-            min-height: 100vh;
-            display: flex;
-            align-items: flex-start; 
-            padding: 140px 5% 0 5%;
-            position: relative; gap: 15px;
-        }
-        .hero-content-left { flex: 0.8; max-width: 600px; z-index: 2; }
-        
-        /* VISUAL DERECHA */
-        .hero-visual-right { 
-            flex: 1.2;
-            display: flex;
-            justify-content: flex-end; 
-            align-items: center; 
-            z-index: 1; position: relative; height: 750px;
-            padding-right: 12%; 
+        /* --- LAYOUT SPLIT SCREEN --- */
+        .split-container {
+            display: flex; height: 100vh; width: 100%; overflow: hidden;
+            padding-top: 90px; box-sizing: border-box; background: #000000;
         }
 
-        /* TEXTOS */
-        /* AJUSTE 2: Espacio entre título y subtítulo (margin-bottom) */
-        .hero-title { 
-            font-size: 4.5rem; font-weight: 900; line-height: 1.05; 
-            margin-bottom: 30px; /* Reducido ligeramente */
-            text-shadow: 0 10px 30px rgba(0,0,0,0.8); 
+        /* --- IZQUIERDA: MURO VISUAL ANIMADO --- */
+        .visual-side {
+            width: 45%; position: relative; overflow: hidden;
+            border-right: 1px solid rgba(191, 149, 63, 0.2); display: flex;
+            justify-content: center; background: #000;
         }
-        .hero-title span { background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 20px rgba(191, 149, 63, 0.3)); }
-        
-        .hero-subtitle { 
-            font-size: 1.1rem; color: var(--texto-gris); line-height: 1.6; 
-            margin-bottom: 35px; /* Reducido para acercar botones */
-            border-left: 3px solid var(--gold-main); padding-left: 15px; 
+        .visual-overlay {
+            position: absolute; inset: 0; 
+            background: linear-gradient(to bottom, #000 0%, transparent 15%, transparent 85%, #000 100%);
+            z-index: 2; pointer-events: none;
         }
-
-        /* BOTONES */
-        .btn-container { display: flex; gap: 15px; }
-        .btn { padding: 15px 30px; border-radius: 50px; font-weight: 800; text-decoration: none; text-transform: uppercase; font-size: 0.8rem; transition: all 0.4s ease; cursor: pointer; position: relative; overflow: hidden; letter-spacing: 1px; }
-        .btn-primary { background: var(--gold-gradient); color: var(--bg-darker); border: none; box-shadow: 0 10px 30px -5px rgba(191, 149, 63, 0.5); }
-        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 20px 40px -5px rgba(191, 149, 63, 0.7); }
-        .btn-secondary { background: transparent; color: var(--gold-main); position: relative; z-index: 1; }
-        .btn-secondary::after { content: ''; position: absolute; inset: 0; border-radius: 50px; padding: 2px; background: var(--gold-gradient); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; z-index: -1; }
-        .btn-secondary:hover { color: white; text-shadow: 0 0 10px var(--gold-main); }
-
-        /* --- CLUSTER VISUAL --- */
-        .visual-cluster { position: relative; width: auto; height: auto; display: flex; justify-content: center; align-items: center; }
-
-        .floating-mockup-container {
-            width: 340px; height: 700px;
-            background: linear-gradient(135deg, #2a2a2a, #000); padding: 5px; border-radius: 55px;
-            box-shadow: 0 50px 100px -20px rgba(0,0,0,0.9), 0 0 80px rgba(191, 149, 63, 0.25);
-            border: 2px solid #444; position: relative;
-            z-index: 10; 
-            animation: floatPhone 7s ease-in-out infinite;
+        .scrolling-wrapper {
+            width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 0 15px;
+            animation: scrollDown 25s linear infinite; 
         }
-        .mockup-screen { width: 100%; height: 100%; background: #080808; border-radius: 50px; overflow: hidden; display: flex; flex-direction: column; align-items: center; position: relative; }
-        .mockup-notch { position: absolute; top: 0; width: 150px; height: 30px; background: #000; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; z-index: 20; }
-        .screen-header { margin-top: 55px; width: 100%; text-align: center; margin-bottom: 25px; }
-        .screen-title { font-size: 0.7rem; letter-spacing: 2px; color: var(--gold-main); font-weight: 700; margin-bottom: 5px; opacity: 0.8; }
-        .screen-logo { font-size: 2rem; font-weight: 900; background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        
-        /* GRID DE MÉTRICAS */
-        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 86%; padding: 0 7%; }
-        .stat-card { background: rgba(20, 20, 20, 0.8); border: 1px solid rgba(191, 149, 63, 0.2); border-radius: 18px; padding: 15px; display: flex; flex-direction: column; justify-content: center; transition: 0.3s; }
-        .stat-card.highlight { border-color: var(--gold-main); background: rgba(191, 149, 63, 0.15); grid-column: span 2; }
-        .stat-icon { font-size: 1.1rem; color: var(--gold-main); margin-bottom: 5px; }
-        .stat-label { font-size: 0.7rem; color: var(--gold-main); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; opacity: 0.9; }
-        .stat-value-container { display: flex; align-items: baseline; gap: 2px; color: white; font-weight: 800; font-size: 1.6rem; margin-top: 2px; }
-        .highlight .stat-value-container { font-size: 2.4rem; color: white; text-shadow: 0 0 10px rgba(191, 149, 63, 0.5); }
-        .stat-suffix { font-size: 0.7em; }
-        @keyframes floatPhone { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+        @keyframes scrollDown { 0% { transform: translateY(-50%); } 100% { transform: translateY(0); } }
 
-        /* --- NOTIFICACIONES --- */
-        .notif-card {
-            position: absolute;
-            background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            border: 1px solid var(--glass-border); padding: 10px 15px; border-radius: 12px;
-            display: flex; align-items: center; gap: 10px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.8);
-            z-index: 5; 
-            min-width: 150px;
-            animation: floatCard 5s ease-in-out infinite alternate;
+        .scroll-img {
+            width: 100%; border-radius: 12px; object-fit: cover; height: 220px; opacity: 0.6; transition: 0.4s;
+            filter: grayscale(60%); border: 1px solid rgba(255,255,255,0.05);
         }
-        .notif-icon { width: 30px; height: 30px; background: var(--gold-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--bg-dark); font-size: 0.9rem; flex-shrink: 0; }
-        .notif-content h4 { margin: 0; font-size: 0.65rem; color: #aaa; font-weight: 600; text-transform: uppercase; }
-        .notif-content p { margin: 0; font-size: 0.9rem; color: white; font-weight: 800; }
+        .scroll-img:hover { opacity: 1; filter: grayscale(0%); transform: scale(1.03); border-color: var(--gold-main); box-shadow: 0 0 20px rgba(191, 149, 63, 0.3); }
 
-        /* POSICIONES */
-        .n-1 { top: 15%; right: -185px; animation-delay: 0s; }
-        .n-7 { top: 45%; right: -185px; animation-delay: 2.2s; } 
-        .n-3 { bottom: 20%; right: -185px; animation-delay: 1s; }
-        .n-6 { top: 15%; left: -185px; animation-delay: 1.8s; } 
-        .n-2 { top: 45%; left: -185px; animation-delay: 0.5s; }
-        .n-4 { bottom: 20%; left: -185px; animation-delay: 1.5s; }
-        .n-9 { top: -70px; left: 0%; animation-delay: 0.8s; } 
-        .n-5 { top: -70px; left: 60%; animation-delay: 2s; }
-        .n-8 { bottom: -60px; left: 50%; transform: translateX(-50%); animation-delay: 2.5s; }
-
-        @keyframes floatCard { 0% { transform: translateY(0); } 100% { transform: translateY(-8px); } }
-        .n-8 { animation: floatCardCenter 5s ease-in-out infinite alternate; }
-        @keyframes floatCardCenter { 0% { transform: translateX(-50%) translateY(0); } 100% { transform: translateX(-50%) translateY(-10px); } }
-
-        /* --- SECCIÓN NOSOTROS (AJUSTADA) --- */
-        .about-section { 
-            /* AJUSTE 3: Padding superior reducido drásticamente */
-            padding: 40px 5% 100px 5%; 
-            position: relative; 
-            z-index: 2; 
-            background: transparent; 
-	    border-top: 2px solid rgba(191, 149, 63, 0.2);
+        /* --- DERECHA: FORMULARIO --- */
+        .form-side {
+            width: 55%; display: flex; flex-direction: column; align-items: center;
+            justify-content: flex-start; position: relative; overflow-y: auto; 
+            padding-top: 40px; padding-bottom: 40px;
         }
-        .section-header { text-align: center; margin-bottom: 60px; }
-        
-        .section-title { 
-            font-size: 3rem; font-weight: 900; 
-            margin-bottom: 10px; /* Reducido espacio */
+        .auth-card {
+            background: #050505; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(191, 149, 63, 0.3); border-radius: 20px; padding: 40px;
+            width: 90%; max-width: 500px; box-shadow: 0 20px 60px rgba(0,0,0,0.9); margin-bottom: 40px;
         }
+        .auth-header { text-align: center; margin-bottom: 25px; }
+        .auth-title { font-size: 1.8rem; font-weight: 800; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
         .gold-text { background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .section-desc { color: var(--texto-gris); max-width: 600px; margin: 0 auto; font-size: 1.1rem; line-height: 1.6; }
         
-        .cards-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; max-width: 1200px; margin: 0 auto; }
-        .glass-card { background: rgba(20, 20, 20, 0.4); border: 1px solid rgba(255, 255, 255, 0.05); padding: 40px 30px; border-radius: 20px; transition: 0.4s; position: relative; overflow: hidden; }
-        .glass-card:hover { transform: translateY(-10px); background: rgba(30, 30, 30, 0.6); border-color: var(--gold-main); box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 30px rgba(191, 149, 63, 0.1); }
-        .card-icon { font-size: 2.5rem; color: var(--gold-main); margin-bottom: 20px; }
-        .glass-card h3 { font-size: 1.5rem; font-weight: 800; margin-bottom: 15px; }
-        .glass-card p { color: #aaa; line-height: 1.6; font-size: 0.95rem; }
-        .highlight-card { background: linear-gradient(145deg, rgba(20, 20, 20, 0.6), rgba(191, 149, 63, 0.05)); border: 1px solid rgba(191, 149, 63, 0.3); }
+        .auth-tabs { display: flex; background: rgba(0,0,0,0.4); border-radius: 50px; padding: 4px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.05); }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: transparent; color: #888; font-weight: 700; cursor: pointer; border-radius: 50px; transition: 0.3s; font-size: 0.85rem; text-transform: uppercase; font-family: 'Montserrat', sans-serif; }
+        .tab-btn.active { background: var(--gold-gradient); color: #000; box-shadow: 0 5px 15px rgba(191, 149, 63, 0.4); }
 
-        /* Responsive */
-        @media (max-width: 1200px) {
-             .hero-title { font-size: 3.5rem; }
-             .hero-visual-right { justify-content: center; padding-right: 0; }
-             .n-1, .n-7, .n-3 { right: -80px; } 
-             .n-6, .n-2, .n-4 { left: -80px; }
-        }
-        @media (max-width: 1024px) {
-            .hero-section { flex-direction: column; text-align: center; padding-top: 130px; height: auto; align-items: center; }
-            .hero-content-left { width: 100%; margin: 0 auto; }
-            .hero-subtitle { border: none; padding: 0; }
-            .btn-container { justify-content: center; }
-            .hero-visual-right { width: 100%; height: 750px; margin-top: 40px; overflow: hidden; justify-content: center; }
+        .form-content { display: none; animation: fadeIn 0.4s ease; }
+        .form-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .input-group { margin-bottom: 18px; position: relative; }
+        .input-label { display: block; font-size: 0.75rem; color: var(--gold-main); font-weight: 700; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .input-field, .input-select { width: 100%; padding: 14px 14px 14px 45px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; color: white; font-family: 'Montserrat', sans-serif; font-size: 0.95rem; box-sizing: border-box; transition: 0.3s; }
+        .input-field:focus, .input-select:focus { border-color: var(--gold-main); outline: none; background: rgba(255,255,255,0.08); box-shadow: 0 0 15px rgba(191, 149, 63, 0.1); }
+        .input-icon { position: absolute; left: 16px; top: 42px; color: #666; font-size: 1rem; transition: 0.3s; }
+        .input-field:focus + .input-icon, .input-select:focus + .input-icon { color: var(--gold-main); }
+        .input-select { cursor: pointer; appearance: none; } .input-select option { background: #000; color: white; }
+
+        .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+        .btn-auth { width: 100%; padding: 16px; background: var(--gold-gradient); border: none; border-radius: 50px; color: #000; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: 0.3s; font-size: 0.95rem; margin-top: 20px; }
+        .btn-auth:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(191, 149, 63, 0.5); }
+
+        .payment-method-container { margin-top: 25px; margin-bottom: 20px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; }
+        .payment-options { display: flex; gap: 15px; margin-top: 15px; }
+        .payment-radio { display: none; }
+        .payment-card-select { flex: 1; border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 15px; text-align: center; cursor: pointer; transition: 0.3s; background: rgba(255,255,255,0.02); font-size: 0.9rem; font-weight: 600; color: #aaa; }
+        .payment-radio:checked + .payment-card-select { border-color: var(--gold-main); background: rgba(191, 149, 63, 0.15); color: white; box-shadow: 0 0 15px rgba(191, 149, 63, 0.2); }
+        .payment-card-select i { font-size: 1.4rem; display: block; margin-bottom: 8px; color: #fff; transition: 0.3s; }
+        .payment-radio:checked + .payment-card-select i { color: var(--gold-main); transform: scale(1.1); }
+
+        .payment-summary-box { background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(191, 149, 63, 0.3); border-radius: 12px; padding: 20px; margin-top: 25px; }
+        .summary-row { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 8px; color: #ccc; }
+        .summary-total { display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: 900; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px; margin-top: 8px; color: white; text-transform: uppercase; }
+        .total-value { color: var(--gold-main); font-size: 1.2rem; }
+
+        .transfer-info { display: none; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 12px; margin-top: 20px; border: 1px dashed rgba(191, 149, 63, 0.4); }
+        .bank-details-box { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin-top: 10px; }
+        .bank-details-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px; }
+        .bank-details-row:last-child { border-bottom: none; }
+        
+        .file-upload-wrapper { position: relative; margin-top: 20px; }
+        .file-upload-label { display: block; width: 100%; padding: 12px; background: rgba(255,255,255,0.08); color: white; text-align: center; border-radius: 10px; cursor: pointer; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.2); transition: 0.3s; font-weight: 600; box-sizing: border-box; }
+        .file-upload-label:hover { border-color: var(--gold-main); background: rgba(191, 149, 63, 0.1); color: var(--gold-main); }
+        .file-upload-input { display: none; }
+        .file-name-display { font-size: 0.8rem; color: var(--gold-main); margin-top: 8px; text-align: center; font-style: italic; }
+
+        .payphone-info { display: none; margin-top: 20px; text-align: center; }
+        .btn-payphone { width: 100%; padding: 18px; background: var(--payphone-color); color: white; border-radius: 50px; text-decoration: none; display: inline-block; font-weight: 800; text-transform: uppercase; box-shadow: 0 5px 20px rgba(230, 90, 44, 0.3); transition: 0.3s; font-size: 1rem; box-sizing: border-box; }
+        .btn-payphone:hover { transform: translateY(-3px); background: #d64d20; box-shadow: 0 10px 30px rgba(230, 90, 44, 0.5); }
+
+        .auth-footer-links { margin-top: 0px; text-align: center; font-size: 0.8rem; color: #666; width: 100%; padding-bottom: 20px; }
+        .auth-footer-links a { color: #888; text-decoration: none; margin: 0 10px; transition: 0.3s; }
+        .auth-footer-links a:hover { color: var(--gold-main); }
+
+        @media (max-width: 900px) {
+            .visual-side { display: none; }
+            .form-side { width: 100%; padding-top: 20px; }
             .nav-links { display: none; }
-            .n-1, .n-2 { z-index: 15; }
-            .n-3, .n-4, .n-6, .n-7, .n-9 { display: none; }
+            .form-grid-2 { grid-template-columns: 1fr; }
+            .auth-card { width: 95%; padding: 25px; }
         }
     </style>
 </head>
 <body>
-    <div class="background-container"><div class="bg-base"></div><div class="bg-grid"></div><div class="bg-glow-1"></div><div class="bg-glow-2"></div><div class="geo-shape shape-square"></div><div class="geo-shape shape-circle"></div><div class="geo-shape shape-line"></div></div>
 
     <nav class="nav-bar">
         <div class="logo-placeholder">
@@ -221,12 +159,11 @@
             SOCIAL MEDIA&nbsp;<span class="logo-highlight">STUDIO</span>
         </div>
         <div class="nav-links">
-            <div class="nav-link-container"><a href="index.html" class="nav-link active">Inicio</a></div>
+            <div class="nav-link-container"><a href="index.html" class="nav-link">Inicio</a></div>
             <div class="nav-link-container"><a href="servicios.html" class="nav-link">Servicios</a></div>
             <div class="nav-link-container"><a href="asociados.html" class="nav-link">Asociados</a></div>
             <div class="nav-link-container"><a href="soporte.html" class="nav-link">Soporte</a></div>
-	    <div class="nav-link-container"><a href="login.html" class="nav-link">Iniciar Sesion</a></div>
-            
+            <div class="nav-link-container"><a href="login.html" class="nav-link active">Iniciar Sesion</a></div>
             <div class="nav-socials-divider"></div>
             <div class="nav-socials">
                 <a href="https://www.instagram.com/sms.mediastudio/" target="_blank" class="nav-social-icon"><i class="fab fa-instagram"></i></a>
@@ -236,380 +173,340 @@
         </div>
     </nav>
 
-    <section class="hero-section">
-        <div class="hero-content-left">
-            <h1 class="hero-title">Monetiza tu <br><span>Influencia Digital.</span></h1>
-            <p class="hero-subtitle">La primera agencia de publicidad activa, donde conectamos el entrenamiento en Redes Sociales, con marcas lideres para aprender y trabajar al mismo tiempo, generando ingresos desde cualquier lugar, y sin tener que invertir tu dinero. </p>
-            <div class="btn-container">
-                <a href="login.html" class="btn btn-primary">QUIERO UNIRME</a>
-                <a href="soporte.html" class="btn btn-secondary">PROMOCIONAME</a>
-            </div>
-        </div>
-
-        <div class="hero-visual-right">
-            <div class="visual-cluster">
+    <div class="split-container">
+        
+        <div class="visual-side">
+            <div class="visual-overlay"></div>
+            <div class="scrolling-wrapper">
+                <img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+                <img src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+                <img src="https://images.unsplash.com/photo-1526304640152-d4619684e484?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+                <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
                 
-                <div class="notif-card n-1"><div class="notif-icon"><i class="fas fa-wallet"></i></div><div class="notif-content"><h4>Comisión</h4><p>+$240</p></div></div>
-                <div class="notif-card n-7"><div class="notif-icon"><i class="fas fa-star"></i></div><div class="notif-content"><h4>Rank</h4><p>Top 10</p></div></div>
-                <div class="notif-card n-3"><div class="notif-icon"><i class="fas fa-chart-line"></i></div><div class="notif-content"><h4>ROI</h4><p>+45%</p></div></div>
-                <div class="notif-card n-6"><div class="notif-icon"><i class="fas fa-comment-dots"></i></div><div class="notif-content"><h4>DM</h4><p>Marca</p></div></div>
-                <div class="notif-card n-2"><div class="notif-icon"><i class="fas fa-user-plus"></i></div><div class="notif-content"><h4>Lead</h4><p>Nuevo</p></div></div>
-                <div class="notif-card n-4"><div class="notif-icon"><i class="fas fa-heart"></i></div><div class="notif-content"><h4>Likes</h4><p>+15K</p></div></div>
-                <div class="notif-card n-9"><div class="notif-icon"><i class="fas fa-bolt"></i></div><div class="notif-content"><h4>Speed</h4><p>+200%</p></div></div>
-                <div class="notif-card n-5"><div class="notif-icon"><i class="fas fa-bell"></i></div><div class="notif-content"><h4>Alerta</h4><p>Viral</p></div></div>
-                <div class="notif-card n-8"><div class="notif-icon"><i class="fas fa-check-circle"></i></div><div class="notif-content"><h4>Estado</h4><p>Verificado</p></div></div>
+                <img src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+                <img src="https://images.unsplash.com/photo-1559526324-4b87b5e36e44?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+                <img src="https://images.unsplash.com/photo-1579621970563-ebec7560eb3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+                <img src="https://images.unsplash.com/photo-1553729459-efe14ef6055d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
 
-                <div class="floating-mockup-container">
-                    <div class="mockup-screen">
-                        <div class="mockup-notch"></div>
-                        <div class="screen-header"><div class="screen-title">PANEL DE CONTROL</div><div class="screen-logo">S.M.S.</div></div>
-                        <div class="dashboard-grid">
-                            <div class="stat-card"><i class="fas fa-image stat-icon"></i><div class="stat-label">Posts</div><div class="stat-value-container"><span class="stat-num" data-target="142">0</span></div></div>
-                            <div class="stat-card"><i class="fas fa-eye stat-icon"></i><div class="stat-label">Vistas</div><div class="stat-value-container"><span class="stat-num" data-target="850">0</span><span class="stat-suffix">K</span></div></div>
-                            <div class="stat-card"><i class="fas fa-heart stat-icon"></i><div class="stat-label">Likes</div><div class="stat-value-container"><span class="stat-num" data-target="42">0</span><span class="stat-suffix">K</span></div></div>
-                            <div class="stat-card"><i class="fas fa-users stat-icon"></i><div class="stat-label">Leads</div><div class="stat-value-container"><span class="stat-num" data-target="328">0</span></div></div>
-                            <div class="stat-card"><i class="fas fa-shopping-cart stat-icon"></i><div class="stat-label">Ventas</div><div class="stat-value-container"><span class="stat-num" data-target="89">0</span></div></div>
-                            <div class="stat-card highlight"><div style="display:flex; justify-content:space-between; align-items:center;"><i class="fas fa-dollar-sign stat-icon" style="color:white;"></i><span style="font-size:0.5rem; color:var(--bg-dark); background:var(--gold-main); padding:2px 5px; border-radius:4px; font-weight:800;">HOY</span></div><div class="stat-label" style="margin-top:5px; color:white;">Comisiones</div><div class="stat-value-container"><span style="font-size:0.8em; margin-right:2px;">$</span><span class="stat-num" data-target="1250">0</span></div></div>
+                <img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+                <img src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+                <img src="https://images.unsplash.com/photo-1526304640152-d4619684e484?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+                <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+                <img src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+                <img src="https://images.unsplash.com/photo-1559526324-4b87b5e36e44?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+                <img src="https://images.unsplash.com/photo-1579621970563-ebec7560eb3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+                <img src="https://images.unsplash.com/photo-1553729459-efe14ef6055d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" class="scroll-img">
+            </div>
+        </div>
+
+        <div class="form-side">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <div class="auth-title">Portal de <span class="gold-text">Socios</span></div>
+                    <p style="color:#888; font-size:0.9rem;">Gestión de cuenta y facturación.</p>
+                </div>
+
+                <div class="auth-tabs">
+                    <button class="tab-btn active" onclick="switchTab('login')">Ingresar</button>
+                    <button class="tab-btn" onclick="switchTab('register')">Registrarse</button>
+                </div>
+
+                <div id="loginForm" class="form-content active">
+                    <form>
+                        <div class="input-group">
+                            <label class="input-label">Correo Electrónico</label>
+                            <input type="email" class="input-field" placeholder="tu@correo.com" required>
+                            <i class="fas fa-envelope input-icon"></i>
                         </div>
-                    </div>
+                        <div class="input-group">
+                            <label class="input-label">Contraseña</label>
+                            <input type="password" class="input-field" placeholder="••••••••" required>
+                            <i class="fas fa-lock input-icon"></i>
+                        </div>
+                        <button type="submit" class="btn-auth">Entrar al Dashboard</button>
+                    </form>
+                </div>
+
+                <div id="registerForm" class="form-content">
+                    <form>
+                        <div class="input-group">
+                            <label class="input-label">Nombres Completos</label>
+                            <input type="text" class="input-field" placeholder="Juan Pérez" required>
+                            <i class="fas fa-user input-icon"></i>
+                        </div>
+
+                        <div class="form-grid-2">
+                            <div class="input-group">
+                                <label class="input-label">Cédula o RUC</label>
+                                <input type="text" class="input-field" placeholder="171..." required>
+                                <i class="fas fa-id-card input-icon"></i>
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">Teléfono</label>
+                                <input type="tel" class="input-field" placeholder="099..." required>
+                                <i class="fas fa-phone input-icon"></i>
+                            </div>
+                        </div>
+
+                        <div class="form-grid-2">
+                             <div class="input-group">
+                                <label class="input-label">Fecha Nacimiento</label>
+                                <input type="date" class="input-field" required>
+                                <i class="fas fa-calendar input-icon"></i>
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">Dirección</label>
+                                <input type="text" class="input-field" placeholder="Av. Principal..." required>
+                                <i class="fas fa-map-marker-alt input-icon"></i>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">Correo Electrónico</label>
+                            <input type="email" class="input-field" placeholder="Para factura y acceso" required>
+                            <i class="fas fa-envelope input-icon"></i>
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">Contraseña</label>
+                            <input type="password" class="input-field" placeholder="Crea tu clave" required>
+                            <i class="fas fa-lock input-icon"></i>
+                        </div>
+
+                        <div class="payment-method-container">
+                            <label class="input-label" style="text-align:center; margin-bottom:15px; font-size:0.9rem;">MÉTODO DE PAGO</label>
+                            
+                            <div class="payment-options">
+                                <input type="radio" name="pago" id="pago_transf" class="payment-radio" checked onchange="togglePayment()">
+                                <label for="pago_transf" class="payment-card-select">
+                                    <i class="fas fa-university"></i> Transferencia
+                                </label>
+
+                                <input type="radio" name="pago" id="pago_card" class="payment-radio" onchange="togglePayment()">
+                                <label for="pago_card" class="payment-card-select">
+                                    <i class="fas fa-credit-card"></i> Tarjeta
+                                </label>
+                            </div>
+
+                            <div class="payment-summary-box">
+                                <div class="summary-row"><span>Subtotal:</span> <span>$40.00</span></div>
+                                <div class="summary-row"><span>IVA (0%):</span> <span>$0.00</span></div>
+                                <div class="summary-row" id="payphoneFeeRow" style="display:none; color:var(--payphone-color);">
+                                    <span>Comisión PayPhone (6%):</span> <span>$2.40</span>
+                                </div>
+                                <div class="summary-total">
+                                    <span>TOTAL A PAGAR:</span> <span class="total-value" id="totalAmountDisplay">$40.00</span>
+                                </div>
+                            </div>
+
+                            <div id="view_transf" class="transfer-info" style="display:block;">
+                                <div class="input-group" style="margin-bottom:15px;">
+                                    <label class="input-label">Selecciona el Banco</label>
+                                    <select id="bankSelector" class="input-select" onchange="updateBankInfo()">
+                                        <option value="pichincha">Banco Pichincha</option>
+                                        <option value="guayaquil">Banco Guayaquil</option>
+                                        <option value="produbanco">Produbanco</option>
+                                        <option value="pacifico">Banco del Pacífico</option>
+                                        <option value="bolivariano">Banco Bolivariano</option>
+                                    </select>
+                                    <i class="fas fa-chevron-down input-icon"></i>
+                                </div>
+                                <div id="bankDetails" class="bank-details-box"></div>
+                                <div class="file-upload-wrapper">
+                                    <label for="comprobante_upload" class="file-upload-label">
+                                        <i class="fas fa-upload"></i> SUBIR FOTO DEL COMPROBANTE
+                                    </label>
+                                    <input type="file" id="comprobante_upload" class="file-upload-input" accept="image/*" onchange="showFileName()">
+                                    <div id="fileNameDisplay" class="file-name-display"></div>
+                                </div>
+                                <button type="submit" class="btn-auth">Enviar Solicitud</button>
+                            </div>
+
+                            <div id="view_card" class="payphone-info">
+                                <p style="color:#aaa; font-size:0.8rem; margin-bottom:20px; line-height:1.5;">
+                                    Pago procesado de forma segura por PayPhone.<br>
+                                    <span style="color:#E65A2C;">Activación inmediata.</span>
+                                </p>
+                                <div id="pp-button" style="display: flex; justify-content: center;"></div>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
-        </div>
-    </section>
-
-    <section id="nosotros" class="about-section">
-        <div class="section-header">
-            <h2 class="section-title">¿QUIENES <span class="gold-text">SOMOS?</span></h2>
-            <p class="section-desc">Somos la primera agencia que une el aprendizaje con el trabajo, sin tener que hacer inversiones absurdas, que no llevan a nada.</p>
-        </div>
-        <div class="cards-container">
-            <div class="glass-card">
-                <div class="card-icon"><i class="fas fa-bullseye"></i></div>
-                <h3>MISION 2026</h3>
-                <p>Permitir que cualquier persona con acceso a redes sociales, aprenda como hacer dinero desde cualquier lugar, rompiendo cualquier esquema de reclutamiento y permitiendoles generar ingresos por si mismos. </p>
-            </div>
-            <div class="glass-card highlight-card">
-                <div class="card-icon"><i class="fas fa-eye"></i></div>
-                <h3>VISION 2026</h3>
-                <p>Ser la agencia de afiliados y publicidad más grande de Latinoamérica para 2030, conectando a 1 millón de socios con las marcas más prestigiosas del mundo, naciendo desde nuestro hermoso Ecuador.</p>
-            </div>
-            <div class="glass-card">
-                <div class="card-icon"><i class="fas fa-gem"></i></div>
-                <h3>VALORES Y ETICA</h3>
-                <p>Legalidad en Ecuador y transparencia total con respecto a comisiones, facturacion, capacitaciones y entrenamientos presenciales o virtuales.</p>
-            </div>
-        </div>
-    </section>
-
-<section id="socios" class="membership-section">
-        <div class="section-header">
-            <h2 class="section-title">CONOCE NUESTROS <span class="gold-text">NIVELES</span></h2>
-            <p class="section-desc">Dependiendo de lo que tu o tu empresa necesite ofrecemos 3 niveles de experiencia al usuario.</p>
-        </div>
-
-        <div class="membership-grid">
             
-            <div class="plan-card">
-                <div class="plan-header">
-                    <h3>BRANDING</h3>
-                    <p class="plan-subtitle">Para empresas legisladas que desean ser promocionadas por S.M.S.</p>
-                </div>
-                <div class="plan-price">
-                    <span>Acceso</span>
-                    <h4>SIN COSTO</h4> </div>
-                <ul class="plan-features">
-                    <li><i class="fas fa-check"></i> Promocion de Servicios y Productos</li>
-                    <li><i class="fas fa-check"></i> Campañas de Publicidad Activa</li>
-                    <li><i class="fas fa-check"></i> Crecimiento y Alcance Aumentado</li>
-                    <li><i class="fas fa-check"></i> Acceso a red de afiliados S.M.S</li>
-                </ul>
-                <a href="soporte.html" class="btn btn-secondary full-width">APLICAR AHORA</a>
-            </div>
-
-            <div class="plan-card highlight-plan">
-                <div class="popular-tag">MÁS SOLICITADO</div>
-                <div class="plan-header">
-                    <h3>Afiliado</h3>
-                    <p class="plan-subtitle">Para personas de todas las edades, que quieran generar ganancias gracias a sus redes sociales.</p>
-                </div>
-                <div class="plan-price">
-                    <span>Comisiones Establecidas</span>
-                    <h4>5% al 20%</h4> </div>
-                <ul class="plan-features">
-                    <li><i class="fas fa-check"></i> <strong>Inscripcion Unica de por vida</strong></li>
-                    <li><i class="fas fa-check"></i> Acceso a la APP S.M.S.</li>
-                    <li><i class="fas fa-check"></i> Capacitaciones Presencial o Virtuales</li>
-                    <li><i class="fas fa-check"></i> Plan de Comisiones S.M.S.</li>
-                </ul>
-                <a href="login.html" class="btn btn-primary full-width">QUIERO ESTE NIVEL</a>
-            </div>
-
-            <div class="plan-card">
-                <div class="plan-header">
-                    <h3>Social Media</h3>
-                    <p class="plan-subtitle">Para empresas que necesitan paginas web, desarrollo de aplicaciones, produccion y edicion de videos.</p>
-                </div>
-                <div class="plan-price">
-                    <span>Modelo</span>
-                    <h4>COMUNIDAD</h4>
-                </div>
-                <ul class="plan-features">
-                    <li><i class="fas fa-check"></i> <strong>Administracion de Negocio.</strong></li>
-                    <li><i class="fas fa-check"></i> Desarrollo de Aplicaciones Web.</li>
-                    <li><i class="fas fa-check"></i> Produccion e Edicion de Videos.</li>
-                    <li><i class="fas fa-check"></i> Capacitaciones de Ventas a empleados.</li>
-                </ul>
-                <a href="soporte.html" class="btn btn-secondary full-width">CONTACTAR</a>
-            </div>
-
-        </div>
-    </section>
-
-    <style>
-        /* CSS SECCIÓN MEMBRESÍAS */
-        .membership-section {
-            padding: 80px 5%;
-            position: relative;
-            z-index: 2;
-	    border-top: 2px solid rgba(191, 149, 63, 0.2);
-        }
-
-        .membership-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            max-width: 1200px;
-            margin: 0 auto;
-            align-items: center; /* Alinea verticalmente */
-        }
-
-        .plan-card {
-            background: rgba(20, 20, 20, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
-            padding: 40px 30px;
-            text-align: center;
-            transition: 0.4s;
-            position: relative;
-        }
-
-        .plan-card:hover {
-            transform: translateY(-10px);
-            border-color: var(--gold-main);
-            background: rgba(30, 30, 30, 0.6);
-        }
-
-        .plan-header h3 { font-size: 1.8rem; font-weight: 800; margin-bottom: 5px; color: white; text-transform: uppercase; }
-        .plan-subtitle { color: #888; font-size: 0.9rem; margin-bottom: 25px; }
-
-        .plan-price { margin-bottom: 30px; padding-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .plan-price span { display: block; font-size: 0.8rem; color: var(--gold-main); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
-        .plan-price h4 { font-size: 2.5rem; margin: 0; color: white; font-weight: 900; }
-
-        .plan-features { list-style: none; padding: 0; margin-bottom: 30px; text-align: left; }
-        .plan-features li { padding: 10px 0; color: #ccc; display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
-        .plan-features li i { color: var(--gold-main); }
-        .plan-features li.disabled { color: #555; text-decoration: line-through; }
-        .plan-features li.disabled i { color: #555; }
-
-        /* Estilos para la tarjeta DESTACADA (Centro) */
-        .highlight-plan {
-            background: linear-gradient(145deg, rgba(30, 30, 30, 0.9), rgba(10, 10, 10, 0.9));
-            border: 1px solid var(--gold-main);
-            transform: scale(1.05); /* Un poco más grande */
-            box-shadow: 0 0 40px rgba(191, 149, 63, 0.15);
-            z-index: 2;
-        }
-        .highlight-plan:hover { transform: scale(1.08); }
-
-        .popular-tag {
-            position: absolute;
-            top: 0; left: 50%;
-            transform: translate(-50%, -50%);
-            background: var(--gold-gradient);
-            color: black;
-            padding: 5px 15px;
-            font-size: 0.7rem;
-            font-weight: 800;
-            border-radius: 20px;
-            text-transform: uppercase;
-            box-shadow: 0 5px 15px rgba(191, 149, 63, 0.4);
-        }
-
-        .full-width { width: 100%; display: block; box-sizing: border-box; }
-
-        /* Responsive */
-        @media (max-width: 900px) {
-            .highlight-plan { transform: scale(1); }
-            .highlight-plan:hover { transform: translateY(-10px); }
-        }
-    </style>
-
-    <section class="cta-section">
-        <div class="cta-content">
-            <h2>¿LISTO PARA CONVERTIRTE EN <span class="gold-text">INFLUENCER?</span></h2>
-            <p>La clave del exito es detectar a donde va el mundo y llegar antes que el resto.</p>
-            <a href="#sesion" class="btn btn-primary">EMPEZAR AHORA</a>
-        </div>
-    </section>
-
-    <footer class="site-footer">
-        <div class="footer-container">
-            <div class="footer-col">
-                <div class="footer-logo">
-                    <img src="https://i.imgur.com/3bI2FKx.jpeg" alt="Logo SMS" class="footer-logo-img">
-                    SOCIAL MEDIA <span class="gold-text">STUDIO</span>
-                </div>
-                <p class="footer-desc">
-                    Transformamos influencia en ingresos. La plataforma líder para creadores y marcas visionarias.
-                </p>
-                <div class="footer-socials">
-                    <a href="https://www.instagram.com/sms.mediastudio/" target="_blank" ><i class="fab fa-instagram"></i></a>
-                    <a href="#"><i class="fab fa-tiktok" target="_blank" ></i></a>
-                    <a href="https://wa.me/593979283332" target="_blank" ><i class="fab fa-whatsapp"></i></a>
-                </div>
-            </div>
-
-            <div class="footer-col">
-                <h4>Navegación</h4>
-                <ul class="footer-links">
-                    <li><a href="index.html">Inicio</a></li>
-                    <li><a href="servicios.html">Servicios</a></li>
-                    <li><a href="asociados.html">Asociados</a></li>
-		    <li><a href="login.html">Inicia Sesion</a></li>
-                </ul>
-            </div>
-
-            <div class="footer-col">
-                <h4>Legal</h4>
-                <ul class="footer-links">
-                    <li><a href="terminos.html">Términos y Condiciones</a></li>
-                    <li><a href="privacidad.html">Política de Privacidad</a></li>
-                    <li><a href="soporte.html">Soporte</a></li>
-                </ul>
+            <div class="auth-footer-links">
+                <a href="terminos.html">Términos</a>
+                <a href="privacidad.html">Privacidad</a>
+                <a href="soporte.html">Ayuda</a>
+                <p style="margin-top:15px; opacity:0.4;">&copy; 2026 S.M.S. Studio.</p>
             </div>
         </div>
-
-        <div class="footer-bottom">
-            <p>&copy; 2024 S.M.S. Studio. Todos los derechos reservados.</p>
-        </div>
-    </footer>
-
-    <style>
-        /* --- ESTILOS DEL CTA Y FOOTER --- */
-        
-        /* CTA Section */
-        .cta-section {
-            padding: 80px 5%;
-            text-align: center;
-            background: linear-gradient(180deg, transparent, rgba(191, 149, 63, 0.05));
-            border-top: 1px solid rgba(255,255,255,0.05);
-            position: relative;
-            z-index: 2;
-        }
-        .cta-content h2 { font-size: 2.5rem; font-weight: 900; margin-bottom: 15px; }
-        .cta-content p { color: #aaa; margin-bottom: 30px; font-size: 1.1rem; }
-
-        /* Footer General */
-        .site-footer {
-            background-color: #000000;
-            border-top: 1px solid var(--gold-main);
-            padding: 80px 5% 20px 5%;
-            position: relative;
-            z-index: 10;
-        }
-
-        .footer-container {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr;
-            gap: 50px;
-            max-width: 1200px;
-            margin: 0 auto 60px auto;
-        }
-
-        /* Columna Logo */
-        .footer-logo {
-            font-size: 1.5rem;
-            font-weight: 900;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .footer-logo-img { height: 40px; border-radius: 5px; }
-        .footer-desc { color: #888; line-height: 1.6; font-size: 0.9rem; max-width: 300px; margin-bottom: 25px; }
-        
-        .footer-socials { display: flex; gap: 15px; }
-        .footer-socials a {
-            width: 40px; height: 40px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            color: white; text-decoration: none; transition: 0.3s;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        .footer-socials a:hover {
-            background: var(--gold-main);
-            color: black;
-            border-color: var(--gold-main);
-            transform: translateY(-3px);
-        }
-
-        /* Columnas Enlaces */
-        .footer-col h4 {
-            color: white;
-            font-size: 1.1rem;
-            margin-bottom: 25px;
-            font-weight: 700;
-        }
-        .footer-links { list-style: none; padding: 0; margin: 0; }
-        .footer-links li { margin-bottom: 15px; }
-        .footer-links a {
-            color: #888;
-            text-decoration: none;
-            transition: 0.3s;
-            font-size: 0.95rem;
-        }
-        .footer-links a:hover { color: var(--gold-main); padding-left: 5px; }
-
-        /* Footer Bottom */
-        .footer-bottom {
-            text-align: center;
-            padding-top: 30px;
-            border-top: 1px solid rgba(255,255,255,0.05);
-            color: #555;
-            font-size: 0.8rem;
-        }
-
-        @media (max-width: 768px) {
-            .footer-container { grid-template-columns: 1fr; text-align: center; gap: 40px; }
-            .footer-desc { margin: 0 auto 25px auto; }
-            .footer-socials { justify-content: center; }
-            .footer-logo { justify-content: center; }
-        }
-    </style>
+    </div>
 
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const counters = document.querySelectorAll('.stat-num');
-            const speed = 200;
-            counters.forEach(counter => {
-                const animate = () => {
-                    const value = +counter.getAttribute('data-target');
-                    const data = +counter.innerText.replace(/,/g, '');
-                    const time = value / speed;
-                    if(data < value) {
-                        counter.innerText = Math.ceil(data + time);
-                        setTimeout(animate, 20);
-                    } else {
-                        counter.innerText = value > 1000 ? value.toLocaleString() : value;
-                    }
-                }
-                animate();
-            });
-        });
+        // === 1. TUS CREDENCIALES ===
+        const firebaseConfig = {
+            apiKey: "AIzaSyBli5zdrVkQxXPTNV3FemRsNAVNmhWqoGM",
+            authDomain: "sms-platform-b7cfe.firebaseapp.com",
+            projectId: "sms-platform-b7cfe",
+            storageBucket: "sms-platform-b7cfe.firebasestorage.app",
+            messagingSenderId: "1043775421559",
+            appId: "1:1043775421559:web:063e28de971a95cbe79a72"
+        };
+        
+        const PAYPHONE_TOKEN = "YnJ8exyDeCaMBHad5foM_Aao86uQmISdKWjWabF3wsISHNGnWgsJBfsHyTqZ8YqKZjxcr6fyoCtbZ3WBKmx-9xW39HiO2yMP-IuamwuVMzpF5R8oQ6H_vgW4VDcKDTnuzAZ14NkqezUIhLHDgJmrSt_mP-4xp-RfMzce8U1063hseHQP6zGvOUmOk3veUPf3UuHjLmnbie3xqbD4jevNUGBG6IWCdPUhZJppj0yccZztkw-30umJHxCIU1y_R31R6VBV-rDMw14F-qS6RTTlWBPNQ-CUVcbZDrv5-vT4_ha67DWXI4buKjsZfvTlUdxczUefk6pVLYpCmhizPeHoAdfb_NA"; // <--- 
+        const IMGBB_KEY = "49db4d7d4a273c5aba76c5e74ce0f317"; // <--- 
 
-    
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // DATOS DE BANCOS
+        const bankData = {
+            pichincha: { name: "S.M.S. Studio", account: "220XXXXXXX", type: "Corriente", ruc: "179XXXXXXX001" },
+            guayaquil: { name: "S.M.S. Studio", account: "14XXXXXXX", type: "Ahorros", ruc: "179XXXXXXX001" },
+            produbanco: { name: "S.M.S. Studio", account: "50XXXXXXX", type: "Corriente", ruc: "179XXXXXXX001" },
+            pacifico: { name: "S.M.S. Studio", account: "77XXXXXXX", type: "Ahorros", ruc: "179XXXXXXX001" },
+            bolivariano: { name: "S.M.S. Studio", account: "09XXXXXXX", type: "Corriente", ruc: "179XXXXXXX001" }
+        };
+
+        function updateBankInfo() {
+            const selector = document.getElementById('bankSelector');
+            const data = bankData[selector.value];
+            document.getElementById('bankDetails').innerHTML = `
+                <div class="bank-details-row"><span class="bank-label">Titular:</span> <span class="bank-value">${data.name}</span></div>
+                <div class="bank-details-row"><span class="bank-label">Cuenta:</span> <span class="bank-value">${data.account}</span></div>
+                <div class="bank-details-row"><span class="bank-label">Tipo:</span> <span class="bank-value">${data.type}</span></div>
+                <div class="bank-details-row"><span class="bank-label">RUC/CI:</span> <span class="bank-value">${data.ruc}</span></div>
+            `;
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.form-content').forEach(form => form.classList.remove('active'));
+            if(tab === 'login') {
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+                document.getElementById('loginForm').classList.add('active');
+            } else {
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+                document.getElementById('registerForm').classList.add('active');
+                updateBankInfo();
+            }
+        }
+
+        function togglePayment() {
+    const isTransf = document.getElementById('pago_transf').checked;
+    document.getElementById('view_transf').style.display = isTransf ? 'block' : 'none';
+    document.getElementById('view_card').style.display = isTransf ? 'none' : 'block';
+    document.getElementById('payphoneFeeRow').style.display = isTransf ? 'none' : 'flex';
+    document.getElementById('totalAmountDisplay').textContent = isTransf ? '$40.00' : '$42.40';
+
+    // DIBUJAR BOTÓN PAYPHONE CON PROTECCIÓN
+    if(!isTransf) {
+        // Verificamos si la librería ya cargó
+        if (typeof payphone !== 'undefined') {
+            document.getElementById('pp-button').innerHTML = "";
+            payphone.checkout({
+                token: PAYPHONE_TOKEN,
+                data: {
+                    amount: 4240,
+                    amountWithoutTax: 4240,
+                    currency: "USD",
+                    clientTransactionId: "TMP-" + Date.now()
+                },
+                onAuthorize: (response) => { console.log("Botón cargado correctamente"); }
+            }).render("#pp-button");
+        } else {
+            document.getElementById('pp-button').innerHTML = "<p style='color:orange;'>Cargando pasarela de pago...</p>";
+            // Intentar de nuevo en 1 segundo si no ha cargado
+            setTimeout(togglePayment, 1000);
+        }
+    }
+}
+
+        function showFileName() {
+            const input = document.getElementById('comprobante_upload');
+            const display = document.getElementById('fileNameDisplay');
+            if (input.files.length > 0) display.textContent = "Archivo listo: " + input.files[0].name;
+            else display.textContent = "";
+        }
+
+        // MOTOR DE REGISTRO
+        const regForm = document.querySelector('#registerForm form');
+        if(regForm) {
+            regForm.addEventListener('submit', async (e) => {
+                const isTransf = document.getElementById('pago_transf').checked;
+                // Si es tarjeta, el botón de PayPhone maneja el pago. Aquí solo bloqueamos el envío normal del form.
+                if(!isTransf) { e.preventDefault(); return; } 
+
+                e.preventDefault();
+                const btn = regForm.querySelector('button[type="submit"]');
+                const originalText = btn.innerText;
+
+                const nombre = regForm.querySelector('input[placeholder="Juan Pérez"]').value;
+                const email = regForm.querySelector('input[placeholder="Para factura y acceso"]').value;
+                const pass = regForm.querySelector('input[placeholder="Crea tu clave"]').value;
+                const telefono = regForm.querySelector('input[placeholder="099..."]').value;
+                const cedula = regForm.querySelector('input[placeholder="171..."]').value;
+
+                btn.innerText = "⏳ PROCESANDO...";
+                btn.disabled = true;
+
+                try {
+                    const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
+                    const uid = userCredential.user.uid;
+                    let fotoUrl = "N/A";
+
+                    const file = document.getElementById('comprobante_upload').files[0];
+                    if(file) {
+                        const formData = new FormData();
+                        formData.append("image", file);
+                        const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method: "POST", body: formData });
+                        const resData = await res.json();
+                        fotoUrl = resData.data.url;
+                    }
+
+                    const counterRef = db.collection('metadata').doc('counters');
+                    let miCodigo = "";
+                    await db.runTransaction(async (transaction) => {
+                        const doc = await transaction.get(counterRef);
+                        let count = doc.exists ? (doc.data().referralCount || 0) + 1 : 1;
+                        miCodigo = "SMS-" + count.toString().padStart(3, '0');
+                        transaction.set(counterRef, { referralCount: count });
+                        transaction.set(db.collection('socios').doc(uid), {
+                            uid, nombre, email, telefono, cedula, codigoReferido: miCodigo,
+                            comprobanteUrl: fotoUrl, metodoPago: "Transferencia",
+                            estado: "Pendiente", fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    });
+
+                    alert("¡Registro enviado! Revisaremos tu pago pronto.");
+                    window.location.reload();
+
+                } catch (err) { alert(err.message); btn.innerText = originalText; btn.disabled = false; }
+            });
+        }
+
+        // MOTOR DE LOGIN
+        const loginForm = document.querySelector('#loginForm form');
+        if(loginForm) {
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = loginForm.querySelector('input[type="email"]').value;
+                const pass = loginForm.querySelector('input[placeholder="••••••••"]').value;
+                try {
+                    const user = await auth.signInWithEmailAndPassword(email, pass);
+                    const doc = await db.collection('socios').doc(user.user.uid).get();
+                    if(doc.exists && doc.data().estado === "Activo") {
+                        sessionStorage.setItem('sms_nombre', doc.data().nombre);
+                        sessionStorage.setItem('sms_codigo', doc.data().codigoReferido);
+                        window.location.href = "dashboard.html";
+                    } else { alert("Cuenta pendiente de activación."); auth.signOut(); }
+                } catch (err) { alert("Acceso denegado."); }
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", () => { updateBankInfo(); togglePayment(); });
     </script>
 </body>
 </html>
